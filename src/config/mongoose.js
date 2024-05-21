@@ -7,7 +7,7 @@ const nodemon = require('nodemon');
 
 const connect = async() => {
     try {
-        await mongoose.connect("mongodb+srv://athultv702:Athul123@cluster0.z0i1vts.mongodb.net/SocialMedia")
+        await mongoose.connect("mongodb+srv://athultv702:Athul123@cluster0.z0i1vts.mongodb.net/flutter")
         console.log('mongoDB is connected');
     } catch (error) {
         console.log(error);
