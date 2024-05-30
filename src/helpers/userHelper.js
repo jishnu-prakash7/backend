@@ -958,6 +958,89 @@ const getCounts= async (userId)=> {
   }
 }
 
+const forgotPassWord =async (email)=>{
+  try {
+    const data ={
+      email:email
+    }
+    const user = await User.findOne({email:email})
+    console.log(user);
+    if(user){
+      const response = await sendEmail(data);
+      return response;
+    }else{
+      return  {
+        status: 404,
+        error_code: "ACCOUNT_NOT_FOUND",
+        message: "You have no account.",
+      };
+    }
+   
+    
+  } catch (error) {
+    console.error('Error while getting counts:', error);
+    throw error;
+  }
+}
+
+const verifyOTP = async (email, otp) => {
+  try {
+    const verify = await Verify.findOne({ email: email });
+    
+    if (!verify) {
+ return {
+        status: 404,
+        error_code: "ACCOUNT_NOT_FOUND",
+        message: "You have no account.",
+      };
+    }
+
+
+    
+    if (verify.token === otp) {
+      return {email:email,status:true};
+    } else {
+      return {email:email,status:false};
+    }
+  } catch (error) {
+    console.error('Error while verifying OTP:', error);
+    throw {
+      status: 500,
+      error_code: "INTERNAL_SERVER_ERROR",
+      message: "Something went wrong while verifying OTP.",
+    };
+  }
+};
+
+const changePassword = async (email,password) => {
+  try {
+  
+    const user = await User.findOne({ email: email });
+    
+    if (!user) {
+      throw {
+        status: 404,
+        error_code: "USER_NOT_FOUND",
+        message: "User not found.",
+      };
+    }
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    user.password = hashedPassword;
+    await user.save();
+
+    // Removing password field before returning user
+    user.password = undefined;
+
+    return user;
+  } catch (error) {
+    console.error('Error while changing password:', error);
+    throw {
+      status: 500,
+      error_code: "INTERNAL_SERVER_ERROR",
+      message: "Something went wrong while changing password.",
+    };
+  }
+};
 
 module.exports = {
   sendVerifyEmail,
@@ -985,7 +1068,10 @@ module.exports = {
   kycPost,
   isKycSubmitted,
   getCounts,
-  getNotificationCount
+  getNotificationCount,
+  changePassword,
+  verifyOTP,
+  forgotPassWord
 }
 
 
