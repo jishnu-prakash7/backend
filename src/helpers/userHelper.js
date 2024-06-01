@@ -967,7 +967,7 @@ const forgotPassWord =async (email)=>{
     console.log(user);
     if(user){
       const response = await sendEmail(data);
-      return response;
+      return { status: 200,response};
     }else{
       return  {
         status: 404,
@@ -998,9 +998,9 @@ const verifyOTP = async (email, otp) => {
 
     
     if (verify.token === otp) {
-      return {email:email,status:true};
+      return { email:email,status:true};
     } else {
-      return {email:email,status:false};
+      return { email:email,status:false};
     }
   } catch (error) {
     console.error('Error while verifying OTP:', error);
