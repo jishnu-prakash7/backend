@@ -163,7 +163,8 @@ const updatePost = async (postId, data) => {
             // Update the post fields
             post.image = data.imageUrl;
             post.description = data.description;
-            post.tags=data.tags
+            post.tags = data.tags
+            post.edited=new Date()
 
             // Save the updated post to the database
             post.save()
@@ -283,6 +284,7 @@ const getAllFolloweesPost = async (userId, page = 1, pageSize = 10) => {
                     const postObject = post.toObject(); // Convert Mongoose document to plain JavaScript object
                     postObject.isLiked = isLiked;
                     postObject.isSaved = isSaved;
+                    
                     followeesPosts.push(postObject); 
                     
                 }
@@ -481,7 +483,8 @@ const addComment = async ({userId,userName,postId,content}) => {
 
             // Save the report
             await newComment.save();
-
+            post.commentCount = post.commentCount + 1;
+            await post.save()
             //notification
             setNotification(post.userId,userId,userName,'commented on your post',type='comment',postId)
 

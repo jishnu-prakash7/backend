@@ -34,7 +34,8 @@ const commentSchema = new Schema({
     deleted: {
         type: Boolean,
         default: false
-    }
+    },
+    
 }, {
     timestamps: true
 });

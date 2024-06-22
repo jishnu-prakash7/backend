@@ -41,7 +41,8 @@ const userSchema = new Schema({
   phone: {
     type: String,
     trim: true,
-    minlength: 10
+    minlength: 10,
+    required:true
   },
 
   bio: {
