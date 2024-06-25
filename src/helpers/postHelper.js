@@ -611,36 +611,48 @@ const fetchReplies = (parentId) => {
 
 
 
-const deleteComment = (commentId) => {
-    return new Promise((resolve, reject) => {
-        Comment.findByIdAndDelete(commentId)
-            .then((deletedComment) => {
-                if (deletedComment) {
-                    return Comment.deleteMany({ parentId: deletedComment._id });
-                } else {
-                    reject({
-                        error_code: 'NOT_FOUND',
-                        message: 'Comment not found',
-                        status: 404,
-                    });
-                }
-            })
-            .then(() => {
-                resolve({
-                    message: 'Comment deleted successfully',
-                    status: 200,
-                });
-            })
-            .catch((error) => {
-                console.error(error);
-                reject({
-                    error_code: 'INTERNAL_SERVER_ERROR',
-                    message: 'Something went wrong on the server',
-                    status: 500,
-                });
-            });
-    });
+const deleteComment = async (commentId) => {
+    try {
+        // Fetch the comment to get the postId and validate existence
+        const comment = await Comment.findById(commentId);
+        
+        if (!comment) {
+            throw {
+                error_code: 'NOT_FOUND',
+                message: 'Comment not found',
+                status: 404,
+            };
+        }
+
+        // Decrement the comment count of the associated post
+        await Post.findByIdAndUpdate(comment.postId, { $inc: { commentCount: -1 } });
+
+        // Delete the main comment
+        await Comment.findByIdAndDelete(commentId);
+
+        // Delete all replies to the comment
+        await Comment.deleteMany({ parentId: commentId });
+
+        // Return a success message
+        return {
+            message: 'Comment deleted successfully',
+            status: 200,
+        };
+
+    } catch (error) {
+        console.error(error);
+        // Ensure the error object has the necessary properties
+        if (!error.status) {
+            error = {
+                error_code: 'INTERNAL_SERVER_ERROR',
+                message: 'Something went wrong on the server',
+                status: 500,
+            };
+        }
+        throw error;
+    }
 };
+
 
 
 
