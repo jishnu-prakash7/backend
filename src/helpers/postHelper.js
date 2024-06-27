@@ -163,7 +163,8 @@ const updatePost = async (postId, data) => {
             // Update the post fields
             post.image = data.imageUrl;
             post.description = data.description;
-            post.tags=data.tags
+            post.tags = data.tags
+            post.edited=new Date()
 
             // Save the updated post to the database
             post.save()
@@ -283,6 +284,7 @@ const getAllFolloweesPost = async (userId, page = 1, pageSize = 10) => {
                     const postObject = post.toObject(); // Convert Mongoose document to plain JavaScript object
                     postObject.isLiked = isLiked;
                     postObject.isSaved = isSaved;
+                    
                     followeesPosts.push(postObject); 
                     
                 }
@@ -481,7 +483,8 @@ const addComment = async ({userId,userName,postId,content}) => {
 
             // Save the report
             await newComment.save();
-
+            post.commentCount = post.commentCount + 1;
+            await post.save()
             //notification
             setNotification(post.userId,userId,userName,'commented on your post',type='comment',postId)
 
@@ -608,36 +611,48 @@ const fetchReplies = (parentId) => {
 
 
 
-const deleteComment = (commentId) => {
-    return new Promise((resolve, reject) => {
-        Comment.findByIdAndDelete(commentId)
-            .then((deletedComment) => {
-                if (deletedComment) {
-                    return Comment.deleteMany({ parentId: deletedComment._id });
-                } else {
-                    reject({
-                        error_code: 'NOT_FOUND',
-                        message: 'Comment not found',
-                        status: 404,
-                    });
-                }
-            })
-            .then(() => {
-                resolve({
-                    message: 'Comment deleted successfully',
-                    status: 200,
-                });
-            })
-            .catch((error) => {
-                console.error(error);
-                reject({
-                    error_code: 'INTERNAL_SERVER_ERROR',
-                    message: 'Something went wrong on the server',
-                    status: 500,
-                });
-            });
-    });
+const deleteComment = async (commentId) => {
+    try {
+        // Fetch the comment to get the postId and validate existence
+        const comment = await Comment.findById(commentId);
+        
+        if (!comment) {
+            throw {
+                error_code: 'NOT_FOUND',
+                message: 'Comment not found',
+                status: 404,
+            };
+        }
+
+        // Decrement the comment count of the associated post
+        await Post.findByIdAndUpdate(comment.postId, { $inc: { commentCount: -1 } });
+
+        // Delete the main comment
+        await Comment.findByIdAndDelete(commentId);
+
+        // Delete all replies to the comment
+        await Comment.deleteMany({ parentId: commentId });
+
+        // Return a success message
+        return {
+            message: 'Comment deleted successfully',
+            status: 200,
+        };
+
+    } catch (error) {
+        console.error(error);
+        // Ensure the error object has the necessary properties
+        if (!error.status) {
+            error = {
+                error_code: 'INTERNAL_SERVER_ERROR',
+                message: 'Something went wrong on the server',
+                status: 500,
+            };
+        }
+        throw error;
+    }
 };
+
 
 
 

@@ -57,7 +57,16 @@ const postSchema = new Schema({
       },
     ],
     default: [],
-  }
+  },
+  edited: {
+    type: Date,
+    default:Date.now
+  },
+  commentCount: {
+    type: Number,
+    default:0
+}
+
 
 
 
